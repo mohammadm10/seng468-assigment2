@@ -1,0 +1,26 @@
+version: '3.9'
+services:
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data:/data/db
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: myapp
+  #   depends_on:
+  #     - mongodb
+  #   ports:
+  #     - 3000:3000
+  #   environment:
+  #     MONGO_URL: mongodb://admin:password@mongodb:27017/mydatabase
+volumes:
+  mongodb_data:
