@@ -14,6 +14,7 @@
     "express-jwt": "^8.4.0",
     "jwks-rsa": "^3.0.1",
     "mongodb": "^5.1.0",
+    "nginx": "^1.0.8",
     "redis": "^4.6.5"
   },
   "devDependencies": {
