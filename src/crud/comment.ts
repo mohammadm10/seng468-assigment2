@@ -1,5 +1,7 @@
 import { MongoClient, ObjectId } from 'mongodb';
 import { CommentCollection } from '../database/schema';
+import { addToCommentCache, getCommentsForPost } from '../redis/caching';
+import { checkPostExists } from './posts';
 
 const uri = 'mongodb://localhost:27017/mydatabase';
 
@@ -8,8 +10,9 @@ export async function addComment(postId: string, comment: string, commentAuthor:
     const client = new MongoClient(uri);
     try {
         await client.connect();
+        const id = new ObjectId();
         const newComment: any = {
-            id: new ObjectId(),
+            id,
             author: commentAuthor,
             post: postId,
             content: comment,
@@ -19,6 +22,7 @@ export async function addComment(postId: string, comment: string, commentAuthor:
         };
         const result = await CommentCollection.insertOne(newComment);
         console.log(`Added comment with commentId: ${result.insertedId}`);
+        addToCommentCache(postId, id.toString(), comment);
     } catch (err) {
         console.error(err);
     } finally {
@@ -26,8 +30,45 @@ export async function addComment(postId: string, comment: string, commentAuthor:
     }
 }
 
+//Check if a comment exists
+export async function checkCommentExists(postId: string): Promise<any> {
+    const comments = await getCommentsForPost(postId);
+    if (comments) {
+        //comments found in cache
+        return JSON.stringify(comments);
+    } else {
+        //Post not in cache, check DB
+        const client = new MongoClient(uri);
+        try {
+            await client.connect();
+            const post = await CommentCollection.find({ _id: new ObjectId(postId) });
+            return post;
+        } catch (err) {
+            console.error(err);
+            return null;
+        } finally {
+            await client.close();
+        }
+    }
+}
+
 //Fetch comments on post
-export async function getComments(postId: string): Promise<any | null> {
+export async function getComments(postId: string): Promise<any> {
+    const comments = await checkCommentExists(postId);
+    if(comments){
+        //Check if the post exists
+        const post = await checkPostExists(postId);
+        if(post){
+            //Check if the post comments are cached
+            const comments = await getCommentsForPost(postId);
+            if(comments){
+                return comments;
+            }
+        }
+    }else{
+        console.log(`No comments for post ${postId}`);
+        return -1;
+    }
     const client = new MongoClient(uri);
     const query = { _id: new ObjectId(postId) };
     const projection = { id: 1, content: 1, author: 1, likes: 1 };
@@ -48,7 +89,7 @@ export async function getComments(postId: string): Promise<any | null> {
 }
 
 //Like a comment
-export async function likeComment(commentId: ObjectId): Promise<any | null> {
+export async function likeComment(commentId: ObjectId): Promise<any> {
     const query = { _id: new ObjectId(commentId) };
     const update = { $inc: { likes: 1 }, $set: { updatedAt: Date.now() } };
     try {
@@ -62,7 +103,7 @@ export async function likeComment(commentId: ObjectId): Promise<any | null> {
 }
 
 //Get comment likes
-export async function getLikes(commentId: ObjectId): Promise<any | null> {
+export async function getLikes(commentId: ObjectId): Promise<any> {
     const client = new MongoClient(uri);
     const query = { _id: new ObjectId(commentId) };
     const projection = { likes: 1 };
