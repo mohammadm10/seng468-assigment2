@@ -21,7 +21,7 @@ interface Post {
   id: ObjectId;
   title: string;
   content: string;
-  author: User;
+  author: String;
   likes: number;
   comments: Comment[];
   createdAt: DateTime;
@@ -30,8 +30,8 @@ interface Post {
 
 interface Comment {
   id: ObjectId;
-  author: User;
-  post: Post;
+  author: String;
+  post: String;
   content: string;
   createdAt: DateTime;
   updatedAt: DateTime;
@@ -40,7 +40,7 @@ interface Comment {
 
 interface Notification {
   id: ObjectId;
-  recipient: User;
+  recipient: String;
   type: String;
   postId: String;
   commentId: String;

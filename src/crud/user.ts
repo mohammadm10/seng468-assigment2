@@ -1,4 +1,4 @@
-import { MongoClient, Collection, ObjectId } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import { UserCollection } from '../database/schema';
 
 const uri = 'mongodb://localhost:27017/mydatabase';
@@ -37,7 +37,7 @@ export async function insertUser(
 }
 
 //Function to fetch a user based off of their userId
-export async function fetchUser(userId: string): Promise<any | null> {
+export async function fetchUser(userId: ObjectId): Promise<any | null> {
     const client = new MongoClient(uri);
     try {
         await client.connect();
@@ -52,7 +52,7 @@ export async function fetchUser(userId: string): Promise<any | null> {
 }
 
 //Function to update a user username given their id
-export async function updateUserName(userId: string, newName: string): Promise<any | null> {
+export async function updateUserName(userId: ObjectId, newName: string): Promise<any | null> {
     const query = { _id: new ObjectId(userId) };
     const update = { $set: { name: newName, updatedAt: Date.now() } };
     try {
@@ -66,7 +66,7 @@ export async function updateUserName(userId: string, newName: string): Promise<a
 }
 
 //Function to update a user email given their id
-export async function updateEmail(userId: string, newEmail: string): Promise<any | null> {
+export async function updateEmail(userId: ObjectId, newEmail: string): Promise<any | null> {
     const query = { _id: new ObjectId(userId) };
     const update = { $set: { email: newEmail, updatedAt: Date.now() } };
     try {
@@ -80,7 +80,7 @@ export async function updateEmail(userId: string, newEmail: string): Promise<any
 }
 
 //Function to delete a user by userId
-export async function deleteUserById(userId: string): Promise<boolean> {
+export async function deleteUserById(userId: ObjectId): Promise<boolean> {
   const client = new MongoClient(uri);
   try {
     await client.connect();
