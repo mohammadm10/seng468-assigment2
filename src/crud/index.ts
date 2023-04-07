@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { insertUser, checkUserExists, updateUserName, updateEmail, deleteUserById, fetchAllUsers } from "./user";
 import { newPost, checkPostExists, likePost, getLikes } from "./posts";
 import { addComment } from "./comment";
+import { sendMessage, getMessage } from "../messaging/message";
 
 async function fetchAllUserIds() {
     try {
@@ -119,3 +120,21 @@ async function addCommentTest() {
 }
 
 //addCommentTest();
+
+async function sendMessageTest(){
+    const sender = new ObjectId('64308930cf241af2668af1b0');
+    const recipient = new ObjectId('64308930cf241af2668af1b1');
+    const message = "This is a test";
+    await sendMessage(sender, recipient, message);
+}
+
+sendMessageTest();
+
+// async function getMessageTest(){
+//     const sender = new ObjectId('64308930cf241af2668af1b0');
+//     const recipient = new ObjectId('64308930cf241af2668af1b1');
+//     const channel = `message_${sender.toString()}_${recipient.toString()}`
+//     await getMessage(sender, channel);
+// }
+
+// getMessageTest();
