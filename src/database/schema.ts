@@ -4,9 +4,8 @@ import { MongoClient, Collection, ObjectId } from 'mongodb';
 const uri = 'mongodb://localhost:27017/mydatabase';
 
 interface User {
-  id: ObjectId;
+  _id: string; //id will be username
   name: string;
-  username: string;
   email: string;
   password: string;
   dateOfBirth: DateTime;
