@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { insertUser, checkUserExists, updateUserName, updateEmail, deleteUserById, fetchAllUsers } from "./user";
+import { insertUser, checkUserExists, updateUserName, updateEmail, deleteUserById, fetchAllUsers, addFriend } from "./user";
 import { newPost, checkPostExists, likePost, getLikes } from "./posts";
 import { addComment } from "./comment";
 import { sendMessage, getMessage } from "../messaging/message";
@@ -83,6 +83,14 @@ async function insertNewPost() {
     const post = await newPost(author, title, content);
 }
 
+async function addFriendTest(){
+    const friend1 = new ObjectId('64308930cf241af2668af1b0');
+    const friend2 = new ObjectId('64308930cf241af2668af1b1');
+    const add = await addFriend(friend1, friend2);
+}
+
+addFriendTest();
+
 // insertNewPost();
 
 async function fetchPost(){
@@ -128,13 +136,13 @@ async function sendMessageTest(){
     await sendMessage(sender, recipient, message);
 }
 
-sendMessageTest();
+//sendMessageTest();
 
-// async function getMessageTest(){
-//     const sender = new ObjectId('64308930cf241af2668af1b0');
-//     const recipient = new ObjectId('64308930cf241af2668af1b1');
-//     const channel = `message_${sender.toString()}_${recipient.toString()}`
-//     await getMessage(sender, channel);
-// }
+async function getMessageTest(){
+    const sender = new ObjectId('64308930cf241af2668af1b0');
+    const recipient = new ObjectId('64308930cf241af2668af1b1');
+    const channel = `message_${sender.toString()}_${recipient.toString()}`
+    await getMessage(sender, channel);
+}
 
 // getMessageTest();

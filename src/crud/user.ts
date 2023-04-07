@@ -170,3 +170,30 @@ export async function deleteUserById(userId: ObjectId): Promise<boolean> {
         return false;
     }
 }
+
+//Add friend
+export async function addFriend(userId: ObjectId, newFriend: ObjectId): Promise<any>{
+    const user = await checkUserExists(userId);
+    const friend = await checkUserExists(newFriend);
+    if(user && friend){
+        // Add friend to user's friends array
+        const updatedUser = await UserCollection.findOneAndUpdate(
+            { _id: userId },
+            { $addToSet: { friends: friend } }
+        );
+
+        // Add user to friend's friends array
+        const updatedFriend = await UserCollection.findOneAndUpdate(
+            { _id: newFriend },
+            { $addToSet: { friends: user } }
+        );
+
+        return {
+            user: updatedUser,
+            friend: updatedFriend
+        };
+    } else {
+        console.log('User or friend does not exist');
+        return -1;
+    }
+}
