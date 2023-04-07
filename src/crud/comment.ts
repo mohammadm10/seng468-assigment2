@@ -1,12 +1,13 @@
 import { MongoClient, ObjectId } from 'mongodb';
-import { CommentCollection } from '../database/schema';
+import { CommentCollection, PostCollection } from '../database/schema';
 import { addToCommentCache, getCommentsForPost } from '../redis/caching';
 import { checkPostExists } from './posts';
+import { addCommentToPost } from './posts';
 
 const uri = 'mongodb://localhost:27017/mydatabase';
 
 //Add comment to post
-export async function addComment(postId: string, comment: string, commentAuthor: string): Promise<any | null> {
+export async function addComment(postId: ObjectId, comment: string, commentAuthor: string): Promise<any | null> {
     const client = new MongoClient(uri);
     try {
         await client.connect();
@@ -22,7 +23,8 @@ export async function addComment(postId: string, comment: string, commentAuthor:
         };
         const result = await CommentCollection.insertOne(newComment);
         console.log(`Added comment with commentId: ${result.insertedId}`);
-        addToCommentCache(postId, id.toString(), comment);
+        await addToCommentCache(postId.toString(), id.toString(), comment);
+        await addCommentToPost(postId, comment, commentAuthor);
     } catch (err) {
         console.error(err);
     } finally {
@@ -31,8 +33,8 @@ export async function addComment(postId: string, comment: string, commentAuthor:
 }
 
 //Check if a comment exists
-export async function checkCommentExists(postId: string): Promise<any> {
-    const comments = await getCommentsForPost(postId);
+export async function checkCommentExists(postId: ObjectId): Promise<any> {
+    const comments = await getCommentsForPost(postId.toString());
     if (comments) {
         //comments found in cache
         return JSON.stringify(comments);
@@ -53,14 +55,14 @@ export async function checkCommentExists(postId: string): Promise<any> {
 }
 
 //Fetch comments on post
-export async function getComments(postId: string): Promise<any> {
+export async function getComments(postId: ObjectId): Promise<any> {
     const comments = await checkCommentExists(postId);
     if(comments){
         //Check if the post exists
         const post = await checkPostExists(postId);
         if(post){
             //Check if the post comments are cached
-            const comments = await getCommentsForPost(postId);
+            const comments = await getCommentsForPost(postId.toString());
             if(comments){
                 return comments;
             }

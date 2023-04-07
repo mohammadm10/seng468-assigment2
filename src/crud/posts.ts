@@ -1,6 +1,6 @@
 import { MongoClient, ObjectId } from 'mongodb';
 import { PostCollection } from '../database/schema';
-import { addToCache, getFromCache } from '../redis/caching';
+import { addToCache, getFromCache, getCommentsForPost } from '../redis/caching';
 
 const uri = 'mongodb://localhost:27017/mydatabase';
 
@@ -11,11 +11,11 @@ export async function newPost(
     content: String
 ): Promise<void> {
     const client = new MongoClient(uri);
-    const id = new ObjectId();
+    const _id = new ObjectId();
     try {
         await client.connect();
         const newPost: any = {
-            id,
+            _id,
             title,
             content,
             author,
@@ -26,7 +26,7 @@ export async function newPost(
         };
         const result = await PostCollection.insertOne(newPost);
         console.log(`Inserted post with id: ${result.insertedId}`);
-        addToCache(id.toString(), JSON.stringify(newPost));
+        await addToCache(_id.toString(), JSON.stringify(newPost));
     } catch (err) {
         console.error(err);
     } finally {
@@ -35,9 +35,9 @@ export async function newPost(
 }
 
 //Get post from cache
-async function getPostCache(postId: string): Promise<any> {
+async function getPostCache(postId: ObjectId): Promise<any> {
     return new Promise((resolve, reject) => {
-        getFromCache(postId, (val) => {
+        getFromCache(postId.toString(), (val) => {
             if (val != null) {
                 resolve(JSON.parse(val));
             } else {
@@ -48,7 +48,7 @@ async function getPostCache(postId: string): Promise<any> {
 }
 
 //Check if a post exists
-export async function checkPostExists(postId: string): Promise<any> {
+export async function checkPostExists(postId: ObjectId): Promise<any> {
     const post = await getPostCache(postId);
     if (post) {
         //Post found in cache
@@ -71,7 +71,7 @@ export async function checkPostExists(postId: string): Promise<any> {
 
 //Like a post
 export async function likePost(postId: ObjectId): Promise<any> {
-    const post = await checkPostExists(postId.toString());
+    const post = await checkPostExists(postId);
     if (post) {
         const query = { _id: new ObjectId(postId) };
         const update = { $inc: { likes: 1 }, $set: { updatedAt: Date.now() } };
@@ -91,10 +91,8 @@ export async function likePost(postId: ObjectId): Promise<any> {
 
 //Get the likes from a post
 export async function getLikes(postId: ObjectId): Promise<any> {
-    const post = await checkPostExists(postId.toString());
+    const post = await checkPostExists(postId);
     if (post) {
-        return post;
-    } else {
         const client = new MongoClient(uri);
         const query = { _id: new ObjectId(postId) };
         const projection = { likes: 1 };
@@ -113,12 +111,15 @@ export async function getLikes(postId: ObjectId): Promise<any> {
         } finally {
             await client.close();
         }
+    }else{
+        console.log(`No post found with id ${postId}`);
+        return -1;
     }
 }
 
 //Fetch a post
 export async function getPostWithAuthor(postId: ObjectId): Promise<any> {
-    const post = await checkPostExists(postId.toString());
+    const post = await checkPostExists(postId);
     if (post) {
         return post;
     } else {
@@ -159,5 +160,40 @@ export async function deletePostById(postId: ObjectId): Promise<number> {
         return 0;
     } finally {
         await client.close();
+    }
+}
+
+//Add comment to a post
+export async function addCommentToPost(postId: ObjectId, comment: string, commentAuthor: string): Promise<any>{
+    const client = new MongoClient(uri);
+    //Grab comment from cache
+    const comments = await getCommentsForPost(postId.toString());
+    if(comments){
+        comments.push({
+            _id: new ObjectId(),
+            author: commentAuthor,
+            post: postId.toString(),
+            content: comment,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            likes: 0
+        });
+        try {
+            await client.connect();
+            //Add comment to the post
+            const result = await PostCollection.updateOne(
+                { _id: postId },
+                { $set: { comments: comments } }
+            );
+            console.log(`Updated post with id: ${postId} with new comment`);
+            return result;
+        } catch (err) {
+            console.error(err);
+        } finally {
+            await client.close();
+        }
+    }else{
+        console.log(`comment not found for post ${postId}`);
+        
     }
 }

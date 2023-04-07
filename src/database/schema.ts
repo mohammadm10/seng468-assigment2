@@ -4,10 +4,11 @@ import { MongoClient, Collection, ObjectId } from 'mongodb';
 const uri = 'mongodb://localhost:27017/mydatabase';
 
 interface User {
-  _id: string; //id will be username
+  _id: ObjectId;
   name: string;
   email: string;
   password: string;
+  username: string;
   dateOfBirth: DateTime;
   friends: User[];
   posts: Post[];
@@ -17,7 +18,7 @@ interface User {
 }
 
 interface Post {
-  id: ObjectId;
+  _id: ObjectId;
   title: string;
   content: string;
   author: String;
@@ -28,7 +29,7 @@ interface Post {
 }
 
 interface Comment {
-  id: ObjectId;
+  _id: ObjectId;
   author: String;
   post: String;
   content: string;
@@ -38,7 +39,7 @@ interface Comment {
 }
 
 interface Notification {
-  id: ObjectId;
+  _id: ObjectId;
   recipient: String;
   type: String;
   postId: String;

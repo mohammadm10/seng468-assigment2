@@ -1,8 +1,9 @@
 import client from "./client";
 
+client.connect();
+
 //Function to add a unique key and its value to cache
 export async function addToCache(key: string, value: string): Promise<void> {
-    await client.connect();
     try {
         client.set(key, value);
         console.log(`Added ${key} to cache with value ${value}`);
@@ -13,7 +14,6 @@ export async function addToCache(key: string, value: string): Promise<void> {
 
 //Function to get a value of a specified key
 export async function getFromCache(key: string, callback: (value: string | null) => void): Promise<void> {
-    await client.connect();
     try {
         const value = await client.get(key);
         callback(value);
@@ -24,7 +24,6 @@ export async function getFromCache(key: string, callback: (value: string | null)
 }
 
 export async function addToCommentCache(postId: string, commentId: string, commentData: any): Promise<void> {
-    await client.connect();
     try {
         const key = `${postId}_comments`;
         const field = commentId;
@@ -37,7 +36,6 @@ export async function addToCommentCache(postId: string, commentId: string, comme
 }
 
 export async function getCommentsForPost(postId: string): Promise<any> {
-    await client.connect();
     try {
         const key = `${postId}_comments`;
         const comments = await client.hGetAll(key);
