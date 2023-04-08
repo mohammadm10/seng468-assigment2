@@ -3,6 +3,14 @@ import { UserCollection } from '../database/schema';
 import { addToCache, getFromCache } from '../redis/caching';
 
 const uri = 'mongodb://localhost:27017';
+
+interface Updates {
+    email?: string;
+    username?: string;
+}
+
+
+
 export async function fetchAllUsers() {
     const client = new MongoClient(uri);
     try {
@@ -23,6 +31,8 @@ export async function insertUser(
     password: string,
     dateOfBirth: Date
 ): Promise<void> {
+    console.log('in insert user');
+    
     const client = new MongoClient(uri);
     const _id = new ObjectId();
     try {
@@ -41,9 +51,12 @@ export async function insertUser(
             updatedAt: new Date(),
         };
         const result = await UserCollection.insertOne(newUser);
+        console.log(result);
+        
         console.log(`Inserted user with id: ${result.insertedId}`);
         //Add user data to cache
         await addToCache(_id.toString(), JSON.stringify(newUser));
+        return newUser;
     } catch (err) {
         console.error(err);
     } finally {
@@ -68,10 +81,8 @@ export async function getUserCache(userId: ObjectId): Promise<any> {
 //Check if a user exists
 export async function checkUserExists(userId: ObjectId): Promise<any> {
     //Try to fetch user from the cache first
-    
     const user = await getUserCache(userId);
     if (user) {
-        
         //User found in cache
         return JSON.stringify(user);
     } else {
@@ -83,7 +94,6 @@ export async function checkUserExists(userId: ObjectId): Promise<any> {
             return user;
         } catch (err) {
             console.error(err);
-            return null;
         } finally {
             await client.close();
         }
@@ -101,54 +111,29 @@ export async function fetchUser(userId: ObjectId): Promise<any> {
     }
 }
 
-//Function to update a user username given their id
-export async function updateUserName(userId: ObjectId, newName: string): Promise<any> {
+//Update user details
+export async function updateUser(userId: ObjectId, updates: Updates): Promise<any> {
     const user = await checkUserExists(userId);
     if (user) {
-        const client = new MongoClient(uri);
-        const query = { _id: new ObjectId(userId) };
-        const update = { $set: { username: newName, updatedAt: Date.now() } };
-        try {
-            await client.connect();
-            const result = await UserCollection.updateOne(query, update);
-            console.log(`Updated ${result.modifiedCount} user with id: ${userId}`);
-            return JSON.stringify(result);
-        } catch (err) {
-            console.error(err);
-            return null;
-        } finally {
-            await client.close();
-        }
+      const client = new MongoClient(uri);
+      const query = { _id: new ObjectId(userId) };
+      const update = { $set: { ...updates, updatedAt: Date.now() } };
+      try {
+        await client.connect();
+        const result = await UserCollection.updateOne(query, update);
+        console.log(`Updated ${result.modifiedCount} user with id: ${userId}`);
+        return JSON.stringify(result);
+      } catch (err) {
+        console.error(err);
+        return null;
+      } finally {
+        await client.close();
+      }
     } else {
-        console.log(`No user found with id: ${userId}`);
-        return -1;
+      console.log(`No user found with id: ${userId}`);
+      return -1;
     }
-}
-
-//Function to update a user email given their id
-export async function updateEmail(userId: ObjectId, newEmail: string): Promise<any> {
-    const user = await checkUserExists(userId);
-    if (user) {
-        const client = new MongoClient(uri);
-        const query = { _id: new ObjectId(userId) };
-        const update = { $set: { email: newEmail, updatedAt: Date.now() } };
-        try {
-            await client.connect();
-            const result = await UserCollection.updateOne(query, update);
-            console.log(`Updated ${result.modifiedCount} user with id: ${userId}`);
-            return JSON.stringify(result);
-        } catch (err) {
-            console.error(err);
-            return null;
-        } finally {
-            await client.close();
-        }
-    } else {
-        console.log(`No user found with id: ${userId}`);
-        return -1;
-    }
-
-}
+  }
 
 //Function to delete a user by userId
 export async function deleteUserById(userId: ObjectId): Promise<boolean> {
@@ -184,7 +169,7 @@ export async function addFriend(userId: ObjectId, newFriend: ObjectId): Promise<
 
         // Add user to friend's friends array
         const updatedFriend = await UserCollection.findOneAndUpdate(
-            { _id: newFriend },
+            { _id: friend._id },
             { $addToSet: { friends: user } }
         );
 

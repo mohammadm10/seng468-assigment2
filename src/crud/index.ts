@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { insertUser, checkUserExists, updateUserName, updateEmail, deleteUserById, fetchAllUsers, addFriend } from "./user";
+import { insertUser, checkUserExists, deleteUserById, fetchAllUsers, addFriend } from "./user";
 import { newPost, checkPostExists, likePost, getLikes } from "./posts";
 import { addComment } from "./comment";
 import { sendMessage, getMessage } from "../messaging/message";
@@ -47,18 +47,6 @@ async function fetchUserFromCache(userId: ObjectId){
         console.log(user);
     }else{
         console.log("Error fetching user from cache");
-    }
-}
-
-async function updateUserNameTest(){
-    const id = new ObjectId("643077edb3d66448ec1a77ac");
-    const newName = "johnnyUpdated";
-    const test = await updateUserName(id, newName);
-    if(test){
-        console.log("User name update!");
-    }else{
-        console.log("Error");
-        
     }
 }
 

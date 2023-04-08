@@ -5,7 +5,7 @@ client.connect();
 //Function to add a unique key and its value to cache
 export async function addToCache(key: string, value: string): Promise<void> {
     try {
-        client.set(key, value);
+        await client.set(key, value);
         console.log(`Added ${key} to cache with value ${value}`);
     } catch (err) {
         console.log(`Error adding key "${key}" with value "${value}" to cache`)

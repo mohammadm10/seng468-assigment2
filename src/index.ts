@@ -2,12 +2,20 @@ import express, { json, Request, Response } from 'express';
 import { errorHandler } from './middleware/error';
 import { NotFoundHandler } from './middleware/notFound';
 import { connect } from './database/schema';
+import client from './redis/client';
+import UsersRouter from './routes/user'
+const bodyParser = require('body-parser');
 
 const app = express();
+
+// parse application/json
+app.use(bodyParser.json());
 
 app.get('/', (req: Request, res: Response) => {
   res.json('Hello, World!');
 });
+
+app.use('/users', UsersRouter);
 
 app.use(NotFoundHandler);
 app.use(errorHandler);
