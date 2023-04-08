@@ -3,8 +3,9 @@ import { errorHandler } from './middleware/error';
 import { NotFoundHandler } from './middleware/notFound';
 import { connect } from './database/schema';
 import client from './redis/client';
-import UsersRouter from './routes/user'
-import PostsRouter from './routes/post'
+import UsersRouter from './routes/user';
+import PostsRouter from './routes/post';
+import CommentsRouter from './routes/comment';
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -18,6 +19,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/users', UsersRouter);
 app.use('/posts', PostsRouter);
+app.use('/comments', CommentsRouter);
 
 app.use(NotFoundHandler);
 app.use(errorHandler);

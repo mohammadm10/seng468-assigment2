@@ -6,6 +6,11 @@ import { addCommentToPost } from './posts';
 
 const uri = 'mongodb://localhost:27017/mydatabase';
 
+interface Updates {
+    likes?: number;
+    content?: string;
+}
+
 //Add comment to post
 export async function addComment(postId: ObjectId, comment: string, commentAuthor: string): Promise<any | null> {
     const client = new MongoClient(uri);
@@ -22,6 +27,8 @@ export async function addComment(postId: ObjectId, comment: string, commentAutho
             updatedAt: new Date(),
         };
         const result = await CommentCollection.insertOne(newComment);
+        console.log(result);
+
         console.log(`Added comment with commentId: ${result.insertedId}`);
         await addToCommentCache(postId.toString(), id.toString(), comment);
         await addCommentToPost(postId, comment, commentAuthor);
@@ -56,18 +63,19 @@ export async function checkCommentExists(postId: ObjectId): Promise<any> {
 
 //Fetch comments on post
 export async function getComments(postId: ObjectId): Promise<any> {
+
     const comments = await checkCommentExists(postId);
-    if(comments){
+    if (comments) {
         //Check if the post exists
         const post = await checkPostExists(postId);
-        if(post){
+        if (post) {
             //Check if the post comments are cached
             const comments = await getCommentsForPost(postId.toString());
-            if(comments){
+            if (comments) {
                 return comments;
             }
         }
-    }else{
+    } else {
         console.log(`No comments for post ${postId}`);
         return -1;
     }
@@ -87,6 +95,45 @@ export async function getComments(postId: ObjectId): Promise<any> {
         return null;
     } finally {
         await client.close();
+    }
+}
+
+//Update comment details
+export async function updateComment(commentId: ObjectId, updates: Updates): Promise<any> {
+    const comment = await checkCommentExists(commentId);
+    if (comment) {
+        const client = new MongoClient(uri);
+        const query = { _id: new ObjectId(commentId) };
+        if (updates.likes) {
+            const update = { $inc: { likes: 1 }, $set: { updatedAt: Date.now() } };
+            try {
+                await client.connect();
+                const result = await CommentCollection.updateOne(query, update);
+                console.log(`Updated ${result.modifiedCount} comment with id: ${commentId}`);
+                return JSON.stringify(result);
+            } catch (err) {
+                console.error(err);
+                return null;
+            } finally {
+                await client.close();
+            }
+        } else {
+            const update = { $set: { ...updates, updatedAt: Date.now() } };
+            try {
+                await client.connect();
+                const result = await CommentCollection.updateOne(query, update);
+                console.log(`Updated ${result.modifiedCount} comment with id: ${commentId}`);
+                return JSON.stringify(result);
+            } catch (err) {
+                console.error(err);
+                return null;
+            } finally {
+                await client.close();
+            }
+        }
+    } else {
+        console.log(`No comment found with id: ${commentId}`);
+        return -1;
     }
 }
 
