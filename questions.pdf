@@ -1,0 +1,99 @@
+1)  What are the trade-offs between using a normalized schema versus a denormalized schema
+    in MongoDB? Which approach would you recommend for the social media platform
+    database and why?
+
+    - Normalized Schema: This schema is used to help minimize redundancy of data. This is done by breaking down the data
+    into smaller tables/partitions and forming relationships between these tables.
+    - Denormalized Schema: The goal of a denormalized schema is to combine data that is related to one-another
+    into a single larger collection, therefore leading to better query performance as less complex queries will
+    need to be executed
+
+    In my opinion, using a denormalized schema for a social media application would be a better approach because
+    the platform would need to store large amounts of data and have the ability to fetch the data quickly. Therefore,
+    if a normalized schema were used, there could be high throughput which would cause the user experienece to worsen
+    as the platform increases in size and new users join.
+
+2)  How would you design an index in MongoDB to support a query that searches for all posts
+    with a particular tag? How would this index be impacted if the number of posts in the
+    database grows significantly?
+
+    If a query searches for all posts with a specific tag, then I would set up an index on the tag field of the 
+    collection to help speed up query execution.
+
+    As the database grows, the index size will also grow naturally. However, the performance of the system depends on
+    how well it was designed to work with the index that is set up. Furthermore, we can also use sharding in Mongo to
+    help speed up our queries as the database grows and our index begins to slow down.
+
+3)  Suppose you need to add a new field to the posts collection to track the location where the
+    post was created. How would you modify the existing documents in the collection to include
+    this new field? What are some potential issues that could arise from this modification?
+
+    To add a new field to the posts collection, I would run an update() call on each document within the collection
+    to only update that single new field, rather than touching any of the already existing fields.
+
+    Depending on the size of the collection, adding a new field to each document in the collection can cause some
+    performance issues and impact the database while the operation is ongoing. Furthermore, adding a new field leave
+    room for data inconsistency. If this database was set up with multiple instances or sharding, we need to ensure that
+    the update on the new field is put through wherever necessary in our system
+
+4)  How would you use Redis as a cache for frequently accessed data in the social media
+    platform? What are the benefits and drawbacks of this approach? How would you handle
+    cache invalidation and cache expiration?
+
+    I would use Redis to cache any data that I deem is frequently accessed, such as user information, posts, etc.
+    Redis should also be used as much as possible before resorting to the database. Therefore, if you are fetching
+    data that you have attempted to store in the cache when it was first inserted, then fetching from the cache would
+    be the ideal approach, however if you get a cache miss then you would need to access the database.
+
+    The benefits of caching is that it allows for faster access to data that is frequently accessed. It also reduces the
+    load put on the database as a cache hit is high priority than fetching straight from the database in many cases.
+    However, Redis has a limited amount of memory, so caching every piece of data is essentially not possible, but that
+    can be dealt with by using cache expiration to expire old cached data and make room for new data to be cached.
+    Handling cache invalidation is quite simple, the system can update Redis when there is data that is being modified/created
+    and stored in the database. That way Redis is always consistent with the database
+
+5)  How would you use Kafka or RabbitMQ to handle real-time notifications and messaging
+    between users on the social media platform? What are the benefits and drawbacks of each
+    messaging system? How would you ensure message persistence and replication?
+
+    To handle real-time notifications and messaging, you would need to properly set up Kafka or RabbitMQ first.
+    To do this, you must first create the topics or queues needed to which messages/notifications will be sent to.
+    Then you must incorporate the messaging system/logic in your code, ie set up send/get messages in specific 
+    parts of your code to allow multiple clients to communicate.
+
+    Kafka is widely used as it was initially designed for high-throughput/low-latency streaming, however it is complex
+    to use and set up.
+
+    On the other hand RabbitMQ is another widely used message broker, and while it may not be able to handle high throughput
+    like Kafka, it provides a simpler and easier to use/incorporate messaging system
+
+    To ensure message persistence and replication when using Kafka or RabbitMQ, both systems provide some sort of fault tolerance,
+    whether that would be through data replication or data backup.
+
+6)  In a multi-user environment, how would you handle concurrency control and data
+    consistency between MongoDB and Redis in the social media platform? What are the
+    benefits and drawbacks of this approach?
+
+    concurrency control: To handle concurrency control between mongodb and Redis, a mutex to lock a resource while it is
+    being written to, therefore ensuring no data corruption is happening in the process. After the data has been written
+    the resource can then be unlocked so it can be accessed again.
+
+    A benefit of this approach is that we are ensuring that the resource is only being accessed by one instance at
+    a time, however the drawback is that it may increase our latency as we are constantly waiting for the resource to be
+    unlocke in order to move onto the next operation
+
+    Data consistency: To ensure data consistency between the mongodb and Redis, we can ensure that data is being updated
+    in the cache whenever it is updated in the database. This includes both updates of specific fields and deletions of
+    documents in a collection. Furthermore, we can run interval checks between the cache and the database to ensure all
+    data is up to date, and expire any old/unused data in the cache to make room for new future data.
+
+    A benefit of this approach is that we are ensuring that data is consistent in the cache through any operation
+    that is happening on the database side, however the drawback is that running a check to find inconsistency between
+    the cache and the database my hault system performance, however only for the short period of time that it is being
+    checked 
+
+    References:
+    Lecture slides
+    https://dev.to/damcosset/mongodb-normalization-vs-denormalization
+    https://hevodata.com/learn/kafka-replication/#:~:text=In%20Kafka%20parlance%2C%20Kafka%20Replication,unavailable%20to%20serve%20the%20requests.
+    https://blog.rabbitmq.com/posts/2020/07/disaster-recovery-and-high-availability-101/

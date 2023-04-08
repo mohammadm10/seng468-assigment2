@@ -1,0 +1,8 @@
+I unfortunately wasn't able to fully complete the assignment as the past 1-2 weeks for me have been hectic, but I got
+a decent chunk of it done. I set up a mongodb and redis instance. I set up redis for caching and messaging. I created
+CRUD operations for users, posts, and comments to which I tested all of them using the end points I created in the 
+routes folder. I created a docker-compose file that creates a mongodb and redis instance, so when that's run, I can 
+access my endpoints using a tool like Insomnia, and it makes requests to localhost 4000. I understand that the main 
+goal of the assignment was not completed, but I'm just hoping for some partial marks for the work that I did so far.
+
+Thank you.

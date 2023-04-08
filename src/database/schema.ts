@@ -1,6 +1,7 @@
 import { DateTime } from '@elastic/elasticsearch/lib/api/types';
 import { MongoClient, Collection, ObjectId } from 'mongodb';
 
+
 const uri = 'mongodb://localhost:27017/mydatabase';
 
 interface User {
@@ -9,12 +10,12 @@ interface User {
   email: string;
   password: string;
   username: string;
-  dateOfBirth: DateTime;
+  dateOfBirth: Date;
   friends: User[];
   posts: Post[];
   comments: Comment[];
-  createdAt: DateTime;
-  updatedAt: DateTime;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface Post {
