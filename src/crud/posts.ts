@@ -4,6 +4,12 @@ import { addToCache, getFromCache, getCommentsForPost } from '../redis/caching';
 
 const uri = 'mongodb://localhost:27017/mydatabase';
 
+interface Updates {
+    likes?: number;
+    title?: string;
+    content?: string;
+}
+
 //Insert a new post
 export async function newPost(
     author: String,
@@ -27,6 +33,7 @@ export async function newPost(
         const result = await PostCollection.insertOne(newPost);
         console.log(`Inserted post with id: ${result.insertedId}`);
         await addToCache(_id.toString(), JSON.stringify(newPost));
+        return newPost;
     } catch (err) {
         console.error(err);
     } finally {
@@ -89,6 +96,34 @@ export async function likePost(postId: ObjectId): Promise<any> {
     }
 }
 
+//Update user details
+export async function updatePost(postId: ObjectId, updates: Updates): Promise<any> {
+    console.log(postId);
+    const post = await checkPostExists(postId);
+    if (post) {
+      const client = new MongoClient(uri);
+      const query = { _id: new ObjectId(postId) };
+      if(updates.likes){
+        const updateLikes = { $inc: { likes: 1 }, $set: { updatedAt: Date.now() } };
+      }
+      const update = { $set: { ...updates, updatedAt: Date.now() } };
+      try {
+        await client.connect();
+        const result = await PostCollection.updateOne(query, update);
+        console.log(`Updated ${result.modifiedCount} post with id: ${postId}`);
+        return JSON.stringify(result);
+      } catch (err) {
+        console.error(err);
+        return null;
+      } finally {
+        await client.close();
+      }
+    } else {
+      console.log(`No post found with id: ${postId}`);
+      return -1;
+    }
+  }
+
 //Get the likes from a post
 export async function getLikes(postId: ObjectId): Promise<any> {
     const post = await checkPostExists(postId);
@@ -125,10 +160,10 @@ export async function getPostWithAuthor(postId: ObjectId): Promise<any> {
     } else {
         const client = new MongoClient(uri);
         const query = { _id: new ObjectId(postId) };
-        const projection = { id: 1, title: 1, content: 1, author: 1, likes: 1, comments: 1 };
+    //const projection = { id: 1, title: 1, content: 1, author: 1, likes: 1, comments: 1 };
         try {
             await client.connect();
-            const result = await PostCollection.findOne(query, { projection });
+            const result = await PostCollection.findOne(query);
             if (result) {
                 return JSON.stringify(result);
             } else {
